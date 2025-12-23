@@ -1,42 +1,62 @@
 #include <mod/amlmod.h>
-#include <mod/logger.h>
 #include <mod/config.h>
 
-MYMODCFG(net.rusjj.mymod.guid, AML Mod Template, 1.0, RusJJ)
+// 1. I-declare muna natin lahat ng variables base sa .ini file mo
+int iNumSubsteps;
+float fSimulationSpeed, fRagdollLinearDamping, fRagdollAngularDamping;
+float fRagdollGravity, fBulletPower, fExplosionPower;
+float fSurfaceFriction, fRagDollFriction, fRagDollRestitution;
+float fRagDollJointDamping, fRagDollGetUpThreshold;
+bool bVehicleShapeUseSpheres, bUseDynamicObjects;
+float fRagDollShapeMargin, fWorldShapeMargin, fDynamicObjectMass;
+float fWorldMinX, fWorldMinY, fWorldMaxX, fWorldMaxY;
+int iNumIPLInstances;
 
-//MYMOD(net.rusjj.mymod.guid, AML Mod Template Without Config, 1.0, RusJJ)
+// Plugin Info
+MYMOD(com.user.ragdollport, RagdollPort, 1.0, Madleg & Junior_Djjr)
 
-//NEEDGAME(net.rusjj.mygame)
+// 2. Ang Function para basahin ang file
+void LoadConfig() {
+    // Hahanapin nito ang "RagDoll_physics.ini" sa config folder
+    Config* cfg = (Config*)GetConfig()->CreateConfig("RagDoll_physics");
 
-//BEGIN_DEPLIST()
-//    ADD_DEPENDENCY_VER(net.rusjj.aml, 1.0)
-//END_DEPLIST()
-
-uintptr_t pGameLibrary = 0;
-ConfigEntry* pCfgMyBestEntry;
-
-extern "C" void OnModLoad()
-{
-    logger->SetTag("Mod Template");
+    // --- Binabasa na natin ang [CONFIG] section ---
     
-    pGameLibrary = aml->GetLib("libMyGame.so");
-    if(pGameLibrary)
-    {
-        logger->Info("MyGame mod is loaded!");
-    }
-    else
-    {
-        logger->Error("MyGame mod is not loaded :(");
-        return; // Do not load our mod?
-    }
+    // Integers (mga buong number)
+    iNumSubsteps = cfg->GetInt("CONFIG", "iNumSubsteps", 5);
+    iNumIPLInstances = cfg->GetInt("CONFIG", "iNumIPLInstances", 100000);
 
-    pCfgMyBestEntry = cfg->Bind("mySetting", "DefaultValue is 0?", "MyUniqueSection");
-    pCfgMyBestEntry->SetString("DefaultValue is unchanged");
-    pCfgMyBestEntry->SetInt(1);
-    pCfgMyBestEntry->Reset();
-    delete pCfgMyBestEntry; // Clean-up memory
+    // Floats (mga may decimal point)
+    fSimulationSpeed = cfg->GetFloat("CONFIG", "fSimulationSpeed", 1.0f);
+    fRagdollLinearDamping = cfg->GetFloat("CONFIG", "fRagdollLinearDamping", 0.05f);
+    fRagdollAngularDamping = cfg->GetFloat("CONFIG", "fRagdollAngularDamping", 0.8f);
+    fRagdollGravity = cfg->GetFloat("CONFIG", "fRagdollGravity", 1.0f);
+    fBulletPower = cfg->GetFloat("CONFIG", "fBulletPower", 1.0f);
+    fExplosionPower = cfg->GetFloat("CONFIG", "fExplosionPower", 1.2f);
+    fSurfaceFriction = cfg->GetFloat("CONFIG", "fSurfaceFriction", 0.9f);
+    fRagDollFriction = cfg->GetFloat("CONFIG", "fRagDollFriction", 0.9f);
+    fRagDollRestitution = cfg->GetFloat("CONFIG", "fRagDollRestitution", 0.1f);
+    fRagDollJointDamping = cfg->GetFloat("CONFIG", "fRagDollJointDamping", 10.0f);
+    fRagDollGetUpThreshold = cfg->GetFloat("CONFIG", "fRagDollGetUpThreshold", 0.5f);
+    fRagDollShapeMargin = cfg->GetFloat("CONFIG", "fRagDollShapeMargin", 0.02f);
+    fWorldShapeMargin = cfg->GetFloat("CONFIG", "fWorldShapeMargin", 0.01f);
+    fDynamicObjectMass = cfg->GetFloat("CONFIG", "fDynamicObjectMass", 20000.0f);
     
-    bool bEnabled = cfg->Bind("Enable", true)->GetBool();
-    delete Config::pLastEntry; // Clean-up of the latest ConfigEntry*
+    // World Coordinates
+    fWorldMinX = cfg->GetFloat("CONFIG", "fWorldMinX", -4000.0f);
+    fWorldMinY = cfg->GetFloat("CONFIG", "fWorldMinY", -4000.0f);
+    fWorldMaxX = cfg->GetFloat("CONFIG", "fWorldMaxX", 4000.0f);
+    fWorldMaxY = cfg->GetFloat("CONFIG", "fWorldMaxY", 4000.0f);
+
+    // Booleans (True or False)
+    bVehicleShapeUseSpheres = cfg->GetBool("CONFIG", "bVehicleShapeUseSpheres", true);
+    bUseDynamicObjects = cfg->GetBool("CONFIG", "bUseDynamicObjects", true);
     
-    cfg->Save(); // Will only save if something was changed}
+    // Save para sigurado (optional)
+    cfg->Save();
+}
+
+extern "C" void OnModLoad() {
+    LoadConfig();
+    // DITO MO ILALAGAY ANG LOGIC KUNG PAANO GAGAMITIN ANG MGA VALUES NA YAN
+}
