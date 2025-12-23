@@ -39,5 +39,4 @@ extern "C" void OnModLoad()
     bool bEnabled = cfg->Bind("Enable", true)->GetBool();
     delete Config::pLastEntry; // Clean-up of the latest ConfigEntry*
     
-    cfg->Save(); // Will only save if something was changed
-}
+    cfg->Save(); // Will only save if something was changed}
