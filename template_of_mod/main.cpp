@@ -1,43 +1,41 @@
 #include <mod/amlmod.h>
 #include <mod/logger.h>
 #include <mod/config.h>
+#include <stdlib.h>
 
-MYMODCFG(net.rusjj.mymod.guid, AML Mod Template, 1.0, RusJJ)
+MYMOD(com.madleg.ragdoll, RagdollPhysics, 1.0, Madleg_JuniorDjjr)
 
-//MYMOD(net.rusjj.mymod.guid, AML Mod Template Without Config, 1.0, RusJJ)
+Config* cfg = NULL;
+int iNumSubsteps;
+float fSimulationSpeed, fRagdollGravity;
+bool bUseDynamicObjects;
 
-//NEEDGAME(net.rusjj.mygame)
+extern "C" void OnModLoad() {
+    logger->SetTag("RagdollPhysics");
+    logger->Info("Ragdoll Mod Loading...");
 
-//BEGIN_DEPLIST()
-//    ADD_DEPENDENCY_VER(net.rusjj.aml, 1.0)
-//END_DEPLIST()
+    cfg = new Config("RagDoll_physics");
+    iNumSubsteps = cfg->GetInt("CONFIG", "iNumSubsteps", 5);
+    fSimulationSpeed = cfg->GetFloat("CONFIG", "fSimulationSpeed", 1.0f);
+    fRagdollGravity = cfg->GetFloat("CONFIG", "fRagdollGravity", 1.0f);
+    bUseDynamicObjects = cfg->GetBool("CONFIG", "bUseDynamicObjects", true);
+    cfg->Save();
 
-uintptr_t pGameLibrary = 0;
-ConfigEntry* pCfgMyBestEntry;
-
-extern "C" void OnModLoad()
-{
-    logger->SetTag("Mod Template");
-    
-    pGameLibrary = aml->GetLib("libMyGame.so");
-    if(pGameLibrary)
-    {
-        logger->Info("MyGame mod is loaded!");
+    char path[256];
+    sprintf(path, "%s/RagDoll_physics.bin", aml->GetConfigPath()); 
+    FILE* file = fopen(path, "rb");
+    if (file) {
+        fseek(file, 0, SEEK_END);
+        long fileSize = ftell(file);
+        fseek(file, 0, SEEK_SET);
+        void* buffer = malloc(fileSize);
+        if (buffer) {
+            fread(buffer, fileSize, 1, file);
+            logger->Info("RagDoll_physics.bin loaded!");
+            free(buffer); 
+        }
+        fclose(file);
     }
-    else
-    {
-        logger->Error("MyGame mod is not loaded :(");
-        return; // Do not load our mod?
-    }
-
-    pCfgMyBestEntry = cfg->Bind("mySetting", "DefaultValue is 0?", "MyUniqueSection");
-    pCfgMyBestEntry->SetString("DefaultValue is unchanged");
-    pCfgMyBestEntry->SetInt(1);
-    pCfgMyBestEntry->Reset();
-    delete pCfgMyBestEntry; // Clean-up memory
-    
-    bool bEnabled = cfg->Bind("Enable", true)->GetBool();
-    delete Config::pLastEntry; // Clean-up of the latest ConfigEntry*
-    
-    cfg->Save(); // Will only save if something was changed
+    logger->Info("Ragdoll Mod initialization finished!");
 }
+
