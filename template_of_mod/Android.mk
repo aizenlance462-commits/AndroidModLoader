@@ -1,10 +1,43 @@
-LOCAL_PATH := $(call my-dir)
+#include <mod/amlmod.h>
+#include <mod/logger.h>
+#include <mod/config.h>
+#include <stdlib.h>
+#include <stdio.h>
 
-include $(CLEAR_VARS)
-LOCAL_CPP_EXTENSION := .cpp .cc
-LOCAL_MODULE    := modtemplate
-LOCAL_SRC_FILES := main.cpp mod/logger.cpp mod/config.cpp
-LOCAL_CFLAGS += -O2 -mfloat-abi=softfp -DNDEBUG -std=c++17
-LOCAL_C_INCLUDES += ./include
-LOCAL_LDLIBS += -llog
-include $(BUILD_SHARED_LIBRARY)
+MYMOD(com.madleg.ragdoll, RagdollPhysics, 1.0, Madleg_JuniorDjjr)
+
+Config* cfg = NULL;
+int iNumSubsteps, iNumIPLInstances;
+float fSimulationSpeed, fRagdollLinearDamping, fRagdollAngularDamping, fRagdollGravity, fBulletPower, fExplosionPower, fSurfaceFriction, fRagDollFriction, fRagDollRestitution, fRagDollJointDamping, fRagDollGetUpThreshold, fRagDollShapeMargin, fWorldShapeMargin, fDynamicObjectMass, fWorldMinX, fWorldMinY, fWorldMaxX, fWorldMaxY;
+bool bVehicleShapeUseSpheres, bUseDynamicObjects;
+
+extern "C" void OnModLoad() {
+    logger->SetTag("RagdollPhysics");
+    logger->Info("Ragdoll Mod Loading...");
+
+    cfg = new Config("RagDoll_physics");
+    iNumSubsteps = cfg->GetInt("CONFIG", "iNumSubsteps", 5);
+    fSimulationSpeed = cfg->GetFloat("CONFIG", "fSimulationSpeed", 1.0f);
+    fRagdollGravity = cfg->GetFloat("CONFIG", "fRagdollGravity", 1.0f);
+    bUseDynamicObjects = cfg->GetBool("CONFIG", "bUseDynamicObjects", true);
+    cfg->Save();
+
+    char path[256];
+    snprintf(path, sizeof(path), "%s/RagDoll_physics.bin", aml->GetConfigPath()); 
+
+    FILE* file = fopen(path, "rb");
+    if (file) {
+        fseek(file, 0, SEEK_END);
+        long fileSize = ftell(file);
+        fseek(file, 0, SEEK_SET);
+        void* buffer = malloc(fileSize);
+        if (buffer) {
+            fread(buffer, fileSize, 1, file);
+            logger->Info("RagDoll_physics.bin loaded!");
+            free(buffer); 
+        }
+        fclose(file);
+    }
+    logger->Info("Ragdoll Mod initialization finished!");
+}
+
